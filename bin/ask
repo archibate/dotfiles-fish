@@ -1,0 +1,239 @@
+#!/usr/bin/env python3
+"""
+Simple CLI for AI queries with configurable provider settings.
+Supports streaming and non-streaming responses, config file, command-line overrides, and piped input.
+Usage: ./ask.py [options] "Your question here"
+       ./ask.py [options] multiple words automatically joined
+       command | ./ask.py [options] "process piped input"
+"""
+
+import os
+import sys
+import json
+import requests
+import argparse
+
+# Configuration
+CONFIG = {
+    "provider": "openai",
+    "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4/chat/completions",
+    "apiKey": os.environ['Z_AI_API_KEY'],
+    "model": "glm-4.5-air",
+    # "baseUrl": "https://api.n1n.ai/v1/chat/completions",
+    # "apiKey": os.environ['N1N_API_KEY'],
+    # "model": "gpt-4o-mini",
+    "temperature": 0.0
+}
+
+
+def ask_ai(question, config=None):
+    """Send question to AI API and return response."""
+    if config is None:
+        config = CONFIG
+    
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "opencode",
+        "Authorization": f"Bearer {config['apiKey']}"
+    }
+    
+    payload = {
+        "model": config["model"],
+        "messages": [{"role": "user", "content": question}],
+        "temperature": config["temperature"]
+    }
+    
+    try:
+        response = requests.post(
+            config["baseUrl"],
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        response.raise_for_status()
+        
+        result = response.json()
+        print(result["choices"][0]["message"]["content"])
+        return True
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error connecting to API: {e}", file=sys.stderr)
+        return False
+    except (KeyError, IndexError) as e:
+        print(f"Error parsing API response: {e}", file=sys.stderr)
+        return False
+
+
+def ask_ai_stream(question, config=None):
+    """Send question to AI API with streaming response."""
+    if config is None:
+        config = CONFIG
+    
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "opencode",
+        "Authorization": f"Bearer {config['apiKey']}"
+    }
+    
+    payload = {
+        "model": config["model"],
+        "messages": [{"role": "user", "content": question}],
+        "temperature": config["temperature"],
+        "stream": True  # Enable streaming
+    }
+    
+    try:
+        response = requests.post(
+            config["baseUrl"],
+            headers=headers,
+            json=payload,
+            stream=True,  # Important for streaming
+            timeout=30
+        )
+        response.raise_for_status()
+        
+        # Process streaming response
+        for line in response.iter_lines():
+            if line:
+                line = line.decode('utf-8')
+                
+                # Skip keep-alive new lines and data: prefix
+                if line.startswith("data: "):
+                    data = line[6:]  # Remove "data: " prefix
+                    
+                    # Check for [DONE] marker
+                    if data == "[DONE]":
+                        break
+                    
+                    try:
+                        # Parse JSON data
+                        json_data = json.loads(data)
+                        
+                        # Extract content from response structure
+                        if "choices" in json_data and len(json_data["choices"]) > 0:
+                            delta = json_data["choices"][0].get("delta", {})
+                            content = delta.get("content", "")
+                            
+                            # Print content without newline to stream output
+                            if content:
+                                try:
+                                    print(content, end="", flush=True)
+                                except BrokenPipeError:
+                                    return True
+                                
+                    except json.JSONDecodeError:
+                        # Skip invalid JSON lines
+                        continue
+                    except Exception as e:
+                        # Handle other parsing errors
+                        print(f"\n[Parse Error: {e}]", end="", flush=True, file=sys.stderr)
+        
+        try:
+            print()  # Final newline after streaming
+        except BrokenPipeError:
+            pass
+        return True
+        
+    except requests.exceptions.RequestException as e:
+        print(f"\nError connecting to API: {e}", file=sys.stderr)
+        return False
+
+
+def load_config(config_file=None):
+    """Load configuration from file and merge with defaults."""
+    config = CONFIG.copy()
+    if config_file:
+        try:
+            with open(config_file, 'r') as f:
+                file_config = json.load(f)
+                config.update(file_config)
+        except FileNotFoundError:
+            print(f"Warning: Config file '{config_file}' not found.", file=sys.stderr)
+        except json.JSONDecodeError as e:
+            print(f"Warning: Config file '{config_file}' is invalid JSON: {e}", file=sys.stderr)
+    return config
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Simple CLI for AI queries with configurable provider settings.",
+        epilog="Examples:\n  ./ask.py 'Who are you?'\n  ./ask.py Who are you   # same as above\n  git diff | ./ask.py 'generate commit message'"
+    )
+    parser.add_argument(
+        "question",
+        nargs='+',
+        help="The question to ask the AI (multiple words allowed, reads from stdin if piped)"
+    )
+    parser.add_argument(
+        "--no-stream",
+        action="store_true",
+        help="Disable streaming response (default: streaming enabled)"
+    )
+    parser.add_argument(
+        "--model",
+        help=f"Model to use (default: {CONFIG['model']})"
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        help=f"Temperature for generation (default: {CONFIG['temperature']})"
+    )
+    parser.add_argument(
+        "--api-key",
+        help="API key (overrides config file and default)"
+    )
+    parser.add_argument(
+        "--base-url",
+        help="Base URL for API endpoint (overrides config file and default)"
+    )
+    parser.add_argument(
+        "--config-file",
+        help="Path to JSON config file (default: none)"
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="%(prog)s 1.0"
+    )
+
+    if sys.stderr is None:
+        sys.stderr = sys.stdout
+    
+    args = parser.parse_args()
+    
+    # Load configuration
+    config = load_config(args.config_file)
+    
+    # Override with command line arguments
+    if args.model:
+        config["model"] = args.model
+    if args.temperature is not None:
+        config["temperature"] = args.temperature
+    if args.api_key:
+        config["apiKey"] = args.api_key
+    if args.base_url:
+        config["baseUrl"] = args.base_url
+    
+    # Join multiple words into single question string
+    question = ' '.join(args.question)
+    
+    # Check for piped input from stdin
+    if sys.stdin is not None and sys.stdin.readable():
+        if not sys.stdin.isatty():
+            stdin_content = sys.stdin.read().strip()
+            if stdin_content:
+                # Include piped content with the question
+                question = f"{stdin_content}\n\n{question}"
+    
+    # Choose streaming or non-streaming
+    if args.no_stream:
+        success = ask_ai(question, config)
+    else:
+        success = ask_ai_stream(question, config)
+    
+    if not success:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

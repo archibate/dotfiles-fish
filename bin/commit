@@ -1,0 +1,15 @@
+#!/usr/bin/env fish
+
+set -l prompt "generate a short commit message based on the git diff. do not explain."
+
+set script_dir (dirname (realpath (status --current-filename)))
+
+if not git diff --cached --quiet
+    git diff --cached \
+        | $script_dir/ask $prompt --temperature 0.0 \
+        | $script_dir/extract_code_snippet \
+        | git commit -F -
+else
+    echo 'Nothing to commit.' >&2
+    return 1
+end
