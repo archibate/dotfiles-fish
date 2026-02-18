@@ -114,6 +114,14 @@ function box -a name
     command -sq opencode; and opencode
 end
 
+function box_fzf
+    set box_base_dir ~/Codes/box
+    set selected (command ls $box_base_dir | fzf --preview="exa $EXA_LG_OPTIONS $box_base_dir/{} 2>/dev/null || ls -la $box_base_dir/{}")
+    if test -n "$selected"
+        cd $box_base_dir/$selected
+    end
+end
+
 function box_rename -a name
     if test -z "$name"
         echo "Usage: box_rename <new_name>"
