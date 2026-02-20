@@ -14,15 +14,22 @@ import requests
 import argparse
 
 # Configuration
+# CONFIG = {
+#     "provider": "openai",
+#     "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4/chat/completions",
+#     "apiKey": os.environ['Z_AI_API_KEY'],
+#     "model": "glm-4.5-air",
+#     # "baseUrl": "https://api.n1n.ai/v1/chat/completions",
+#     # "apiKey": os.environ['N1N_API_KEY'],
+#     # "model": "gpt-4o-mini",
+#     "temperature": 0.0
+# }
 CONFIG = {
     "provider": "openai",
-    "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4/chat/completions",
-    "apiKey": os.environ['Z_AI_API_KEY'],
-    "model": "glm-4.5-air",
-    # "baseUrl": "https://api.n1n.ai/v1/chat/completions",
-    # "apiKey": os.environ['N1N_API_KEY'],
-    # "model": "gpt-4o-mini",
-    "temperature": 0.0
+    "baseUrl": "http://localhost:11434/v1/chat/completions",
+    "apiKey": 'not-required',
+    "model": "qwen2.5-coder:14b",
+    "temperature": 0.4
 }
 
 
