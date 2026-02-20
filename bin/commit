@@ -1,6 +1,12 @@
 #!/usr/bin/env fish
 
-set -l prompt "generate a short commit message based on the git diff. do not explain."
+set -l prompt 'You are an AI assistant that generates git commit messages from the provided git diff. Your output must be a raw commit message following established best practices:
+- First line: a short summary in the imperative mood (e.g., "Add feature", "Fix bug"), ideally under 50 characters.
+- Then a blank line.
+- Then a more detailed description (if needed), explaining the motivation, context, and key changes, with lines wrapped at 72 characters.
+The commit message should be informative and accurately reflect the changes in the diff.
+
+Output only the raw commit message—no additional text, explanations, markdown, or commentary. Do not include the diff in your output.'
 
 set script_dir (dirname (realpath (status --current-filename)))
 
