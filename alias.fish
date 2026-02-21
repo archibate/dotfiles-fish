@@ -155,13 +155,23 @@ function gethub -a repo
 end
 
 function cmd
-    set commands (commander $argv | string split0)
+    set -l context ""
+    
+    if set -q TMUX
+        set context (tmux capture-pane -pS - 2>/dev/null)
+    else if set -q KITTY_WINDOW_ID
+        set context (kitty @ get-text --extent=screen 2>/dev/null)
+    else
+        set context (history search --max 50 2>/dev/null | string join '\n')
+    end
+    
+    set commands (commander --context "$context" $argv | string split0)
     
     if test -z "$commands"
         return 1
     end
     
-    set selected (printf '%s\n' $commands | fzf)
+    set selected (string join0 $commands | fzf --read0)
     
     if test -n "$selected"
         commandline -r -- $selected

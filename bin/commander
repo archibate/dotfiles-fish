@@ -21,6 +21,15 @@ PROMPTS = {
 Always wrap commands in a bash code block. Put the code block at the very end of your response.""",
 }
 
+CONTEXT_PROMPT = """
+
+Previous terminal context:
+<context>
+{context}
+</context>
+
+Use this context to better understand the user's request when relevant."""
+
 
 def main():
     parser = argparse.ArgumentParser(description="Extract bash commands from AI responses")
@@ -30,10 +39,17 @@ def main():
         default="normal",
         help="Response mode: fast (no explanation), normal (brief), slow (detailed thinking)"
     )
+    parser.add_argument(
+        "--context", "-c",
+        default="",
+        help="Terminal context (screen output or history)"
+    )
     parser.add_argument("question", nargs="+", help="The question to ask")
     args = parser.parse_args()
 
     system_prompt = PROMPTS[args.mode]
+    if args.context:
+        system_prompt += CONTEXT_PROMPT.format(context=args.context)
     cmd = [ASK_PATH, "--system-prompt", system_prompt] + args.question
 
     try:
