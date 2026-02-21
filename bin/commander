@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+"""
+CLI wrapper for ask that extracts bash commands from AI responses.
+Streams full response to stderr, outputs extracted bash blocks to stdout (joined by \0).
+"""
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+
+ASK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ask")
+
+PROMPTS = {
+    "fast": """You are a shell command assistant. Given a user request, output ONLY the command(s) in a single ```bash ... ``` code block. No explanation, no thinking, just the code block.""",
+    "normal": """You are a shell command assistant. Given a user request, respond with a brief explanation then provide the recommended command(s) in a ```bash ... ``` code block. Always wrap commands in a bash code block.""",
+    "slow": """You are a shell command assistant. Given a user request:
+1. First explain your reasoning and approach step by step
+2. Then provide the recommended command(s) in a ```bash ... ``` code block at the end
+Always wrap commands in a bash code block. Put the code block at the very end of your response.""",
+}
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Extract bash commands from AI responses")
+    parser.add_argument(
+        "--mode", "-m",
+        choices=["fast", "normal", "slow"],
+        default="normal",
+        help="Response mode: fast (no explanation), normal (brief), slow (detailed thinking)"
+    )
+    parser.add_argument("question", nargs="+", help="The question to ask")
+    args = parser.parse_args()
+
+    system_prompt = PROMPTS[args.mode]
+    cmd = [ASK_PATH, "--system-prompt", system_prompt] + args.question
+
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=sys.stderr,
+        )
+    except FileNotFoundError:
+        print(f"commander: cannot find ask at {ASK_PATH}", file=sys.stderr)
+        sys.exit(1)
+
+    buffer = []
+    try:
+        for chunk in proc.stdout:
+            sys.stderr.buffer.write(chunk)
+            sys.stderr.buffer.flush()
+            buffer.append(chunk)
+    except BrokenPipeError:
+        pass
+
+    proc.wait()
+    full_response = b"".join(buffer).decode("utf-8")
+
+    blocks = re.findall(r"```bash\s*\n(.*?)```", full_response, re.DOTALL)
+
+    if not blocks:
+        # print("commander: no bash code block in response", file=sys.stderr)
+        sys.exit(1)
+
+    sys.stdout.write("\0".join(b.strip() for b in blocks))
+
+
+if __name__ == "__main__":
+    main()

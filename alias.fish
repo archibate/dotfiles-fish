@@ -63,8 +63,10 @@ abbr -a m --function projectdo_build
 
 if command -sq opencode
     function opencode
+        set -l session_random_key (basename $PWD)-(command -sq openssl; and openssl rand -hex 8; or random)
         set -lx SHELL (which bash)
         set -lx OPENCODE_ENABLE_EXA 1
+        set -lx AGENT_BROWSER_SESSION $session_random_key
         command opencode $argv
     end
 end
@@ -150,4 +152,18 @@ function gethub -a repo
     end
     mkdir -p (dirname $clone_dir)
     git clone git@github.com:$repo.git $clone_dir; and cd $clone_dir
+end
+
+function cmd
+    set commands (commander $argv | string split0)
+    
+    if test -z "$commands"
+        return 1
+    end
+    
+    set selected (printf '%s\n' $commands | fzf)
+    
+    if test -n "$selected"
+        commandline -r -- $selected
+    end
 end

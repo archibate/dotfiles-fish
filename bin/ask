@@ -33,7 +33,7 @@ CONFIG = {
 }
 
 
-def ask_ai(question, config=None):
+def ask_ai(question, config=None, system_prompt=None):
     """Send question to AI API and return response."""
     if config is None:
         config = CONFIG
@@ -44,9 +44,14 @@ def ask_ai(question, config=None):
         "Authorization": f"Bearer {config['apiKey']}"
     }
     
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": question})
+    
     payload = {
         "model": config["model"],
-        "messages": [{"role": "user", "content": question}],
+        "messages": messages,
         "temperature": config["temperature"]
     }
     
@@ -71,7 +76,7 @@ def ask_ai(question, config=None):
         return False
 
 
-def ask_ai_stream(question, config=None):
+def ask_ai_stream(question, config=None, system_prompt=None):
     """Send question to AI API with streaming response."""
     if config is None:
         config = CONFIG
@@ -82,11 +87,16 @@ def ask_ai_stream(question, config=None):
         "Authorization": f"Bearer {config['apiKey']}"
     }
     
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": question})
+    
     payload = {
         "model": config["model"],
-        "messages": [{"role": "user", "content": question}],
+        "messages": messages,
         "temperature": config["temperature"],
-        "stream": True  # Enable streaming
+        "stream": True
     }
     
     try:
@@ -198,6 +208,10 @@ def main():
         help="Path to JSON config file (default: none)"
     )
     parser.add_argument(
+        "--system-prompt",
+        help="System prompt to prepend to the conversation"
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version="%(prog)s 1.0"
@@ -234,9 +248,9 @@ def main():
     
     # Choose streaming or non-streaming
     if args.no_stream:
-        success = ask_ai(question, config)
+        success = ask_ai(question, config, system_prompt=args.system_prompt)
     else:
-        success = ask_ai_stream(question, config)
+        success = ask_ai_stream(question, config, system_prompt=args.system_prompt)
     
     if not success:
         sys.exit(1)
