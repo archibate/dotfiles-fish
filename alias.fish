@@ -157,13 +157,13 @@ end
 function cmd
     set -l context ""
     
-    if set -q TMUX
-        set context (tmux capture-pane -pS - 2>/dev/null)
-    else if set -q KITTY_WINDOW_ID
-        set context (kitty @ get-text --extent=screen 2>/dev/null)
-    else
-        set context (history search --max 50 2>/dev/null | string join '\n')
-    end
+    # if set -q TMUX
+    #     set context (tmux capture-pane -pS - 2>/dev/null)
+    # else if set -q KITTY_WINDOW_ID
+    #     set context (kitty @ get-text --extent=screen 2>/dev/null)
+    # else
+    #     set context (history search --max 50 2>/dev/null | string join '\n')
+    # end
     
     set commands (commander --context "$context" $argv | string split0)
     
