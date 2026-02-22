@@ -13,12 +13,12 @@ import sys
 ASK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ask")
 
 PROMPTS = {
-    "fast": """You are a shell command assistant. Given a user request, output ONLY the command(s) in a single ```bash ... ``` code block. No explanation, no thinking, just the code block.""",
-    "normal": """You are a shell command assistant. Given a user request, respond with a brief explanation then provide the recommended command(s) in a ```bash ... ``` code block. Always wrap commands in a bash code block.""",
+    "fast": """You are a shell command assistant. Given a user request, output ONLY the command(s) in a single ```bash ... ``` code block. Do not use placeholders in commands. No explanation, no thinking, just the code block.""",
+    "normal": """You are a shell command assistant. Given a user request, respond with a brief explanation then provide the recommended command(s) in a ```bash ... ``` code block. Do not use placeholders in commands. Always wrap commands in a bash code block.""",
     "slow": """You are a shell command assistant. Given a user request:
 1. First explain your reasoning and approach step by step
 2. Then provide the recommended command(s) in a ```bash ... ``` code block at the end
-Always wrap commands in a bash code block. Put the code block at the very end of your response.""",
+Do not use placeholders in commands. Always wrap commands in a bash code block. Put the code block at the very end of your response.""",
 }
 
 CONTEXT_PROMPT = """
