@@ -3,7 +3,7 @@
 set -l fisher_plugins (cat $__fish_config_dir/fish_plugins)
 
 if not command -sq fisher; and not functions -q fisher
-    curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher
+    curl -sfSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher
 end
 
 for plugin in $fisher_plugins
