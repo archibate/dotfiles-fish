@@ -62,6 +62,13 @@ abbr -a t --function projectdo_test
 abbr -a r --function projectdo_run
 abbr -a m --function projectdo_build
 
+if command -sq paru
+    function paru
+        set -lx GITFLAGS="--filter=tree:0 --depth=1"
+        command paru $argv
+    end
+end
+
 if command -sq opencode
     function opencode
         set -l session_random_key (basename $PWD)-(command -sq openssl; and openssl rand -hex 8; or random)
