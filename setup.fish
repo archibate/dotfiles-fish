@@ -24,3 +24,6 @@ fish_add_path -U $__fish_config_dir/bin
 fish_config theme choose 'TokyoNight Moon'
 
 test -f $__fish_config_dir/.env; or touch $__fish_config_dir/.env
+
+echo "To edit your environment variables: nvim $__fish_config_dir/.env"
+echo "To set fish as default shell: sudo chsh $USER -s $(which fish)"
