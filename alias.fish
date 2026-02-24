@@ -64,7 +64,7 @@ abbr -a m --function projectdo_build
 
 if command -sq paru
     function paru
-        set -lx GITFLAGS="--filter=tree:0 --depth=1"
+        set -lx GITFLAGS "--filter=tree:0 --depth=1"
         command paru $argv
     end
 end
