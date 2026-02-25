@@ -20,7 +20,7 @@ def cleanup_socket(path):
 
 
 def serve_mode(socket_path):
-    """Run server: listen for image paths and display them with timg."""
+    """Run server: listen for image paths and display them with kitten icat."""
     atexit.register(cleanup_socket, socket_path)
 
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -53,7 +53,7 @@ def serve_mode(socket_path):
                     real_path = os.path.realpath(path)
 
                     if os.path.isfile(real_path):
-                        subprocess.run(["timg", real_path])
+                        subprocess.run(["kitten", "icat", real_path])
                     else:
                         print(f"File not found: {real_path}", file=sys.stderr)
             finally:
