@@ -11,20 +11,22 @@ Output only the raw commit message—no additional text, explanations, markdown,
 set script_dir (dirname (realpath (status --current-filename)))
 
 if not git diff --cached --quiet
-    set -l diff_output (git diff --cached)
-    set -l diff_size (string length $diff_output)
+    set -l diff_size (git diff --cached | wc -c | string trim)
 
     if test $diff_size -lt 10240  # 10KB threshold
-        set summary $diff_output
+        git diff --cached \
+            | $script_dir/ask $prompt --temperature 0.0 \
+            | $script_dir/extract_code_snippet \
+            | git commit -F -
     else
-        set summary (git diff --cached --stat)
+        set -l summary (git diff --cached --stat)
         set summary "$summary\n"(git diff --cached --name-status)
-    end
 
-    echo $summary \
-        | $script_dir/ask $prompt --temperature 0.0 \
-        | $script_dir/extract_code_snippet \
-        | git commit -F -
+        echo -e $summary \
+            | $script_dir/ask $prompt --temperature 0.0 \
+            | $script_dir/extract_code_snippet \
+            | git commit -F -
+    end
 else
     echo 'Nothing to commit.' >&2
     return 1
