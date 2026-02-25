@@ -1,0 +1,44 @@
+#!/usr/bin/env fish
+
+# System prompt for AI to identify ignore-worthy files
+# CRITICAL: Only output patterns based on actual files in input - NO examples in prompt, NO suggestions
+set -l prompt 'You are an AI assistant that identifies files that should be added to .gitignore based ONLY on the provided list of untracked files.
+
+CRITICAL RULES:
+- ONLY output gitignore patterns for files/directories that actually appear in the input list
+- Do NOT suggest patterns for files not shown in the input
+- Do NOT ignore: documentation files, configuration files, source code
+- If you determine a file should be ignored, choose the most appropriate pattern:
+  - Directory pattern for files inside directories (e.g., "node_modules/")
+  - Extension pattern for multiple files with same extension (e.g., "*.pyc")
+  - Exact filename for single files
+- If no files from the input should be ignored, output EXACTLY: NULL
+
+Output only the gitignore patterns—no explanations, markdown, or commentary.
+Output EXACTLY "NULL" (no quotes) if no patterns should be added.'
+
+set script_dir (dirname (realpath (status --current-filename)))
+
+# Check for untracked files (starts with ??)
+set -l untracked (git status --porcelain 2>/dev/null | string match -r '^\?\?.*' | string replace -r '^.. ' '')
+
+if test -z "$untracked"
+    echo 'No untracked files found.' >&2
+    return 1
+end
+
+# Analyze files and capture output
+set -l result (printf "Untracked files:\n%s\n" $untracked \
+    | $script_dir/ask $prompt --temperature 0.0 --no-stream \
+    | $script_dir/extract_code_snippet)
+
+# Check for NULL (no patterns) vs actual patterns
+if test "$result" = "NULL"
+    echo 'No gitignore patterns needed.' >&2
+    return 0
+end
+
+# Append to .gitignore and display
+printf "%s\n" $result | tee -a .gitignore
+echo "" >&2
+echo "Patterns appended to .gitignore" >&2
