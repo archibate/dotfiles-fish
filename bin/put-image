@@ -1,0 +1,103 @@
+#!/usr/bin/env -S uv --quiet run --script
+# /// script
+# dependencies = []
+# ///
+
+import argparse
+import os
+import socket
+import subprocess
+import sys
+import atexit
+
+SOCKET_PATH = "/tmp/put-image.sock"
+
+
+def cleanup_socket(path):
+    """Remove socket file on exit."""
+    if os.path.exists(path):
+        os.unlink(path)
+
+
+def serve_mode(socket_path):
+    """Run server: listen for image paths and display them with timg."""
+    atexit.register(cleanup_socket, socket_path)
+
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+
+    try:
+        sock.bind(socket_path)
+    except OSError as e:
+        print(f"Error: {e}. Socket already in use?", file=sys.stderr)
+        sys.exit(1)
+
+    sock.listen(1)
+    print(f"put-image server listening on {socket_path}", file=sys.stderr)
+
+    try:
+        while True:
+            conn, _ = sock.accept()
+            try:
+                # Read until newline
+                data = b""
+                while True:
+                    chunk = conn.recv(1)
+                    if not chunk:
+                        break
+                    if chunk == b"\n":
+                        break
+                    data += chunk
+
+                if data:
+                    path = data.decode("utf-8")
+                    real_path = os.path.realpath(path)
+
+                    if os.path.isfile(real_path):
+                        subprocess.run(["timg", real_path])
+                    else:
+                        print(f"File not found: {real_path}", file=sys.stderr)
+            finally:
+                conn.close()
+    except KeyboardInterrupt:
+        print("\nShutting down server", file=sys.stderr)
+    finally:
+        sock.close()
+
+
+def put_mode(socket_path, image_path):
+    """Send image path to server."""
+    if not os.path.exists(socket_path):
+        # Silently exit if no server running
+        sys.exit(0)
+
+    real_path = os.path.realpath(image_path)
+
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        sock.connect(socket_path)
+        sock.sendall(real_path.encode("utf-8") + b"\n")
+    finally:
+        sock.close()
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Send image paths to a viewing terminal")
+    parser.add_argument("--serve", action="store_true", help="Run in server mode")
+    parser.add_argument(
+        "--socket-path", default=SOCKET_PATH, help="Path to Unix socket (default: %(default)s)"
+    )
+    parser.add_argument("image_path", nargs="?", help="Path to image file (put mode only)")
+
+    args = parser.parse_args()
+
+    if args.serve:
+        serve_mode(args.socket_path)
+    elif args.image_path:
+        put_mode(args.socket_path, args.image_path)
+    else:
+        parser.print_help()
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

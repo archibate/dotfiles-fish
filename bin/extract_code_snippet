@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S /snap/astral-uv/current/bin/uv run --script
+# /// script
+# dependencies = []
+# ///
 """
 Extract triple backtick code blocks from stdin and output their content.
 By default extracts only the first code block. Streaming processing.
