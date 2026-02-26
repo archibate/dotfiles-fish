@@ -76,6 +76,12 @@ if command -sq docker
     end
 end
 
+if command -sq docker-compose
+    function docker-compose
+        command sudo -g docker -- docker-compose $argv
+    end
+end
+
 if set -q EDITOR
     function nano
         command $EDITOR $argv
