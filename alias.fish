@@ -70,15 +70,17 @@ if command -sq paru
     end
 end
 
-if command -sq docker
-    function docker
-        command sudo -g docker -- docker $argv
+if id -nG | grep -vq '\bdocker\b'
+    if command -sq docker
+        function docker
+            command sudo -g docker -- docker $argv
+        end
     end
-end
 
-if command -sq docker-compose
-    function docker-compose
-        command sudo -g docker -- docker-compose $argv
+    if command -sq docker-compose
+        function docker-compose
+            command sudo -g docker -- docker-compose $argv
+        end
     end
 end
 
