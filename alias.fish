@@ -59,14 +59,20 @@ abbr -a j z
 abbr -a fishconf "$EDITOR $__fish_config_dir/config.fish && source $__fish_config_dir/config.fish"
 abbr -a fishenv "$EDITOR $__fish_config_dir/.env && load_dotenv $__fish_config_dir/.env"
 
-abbr -a t --function projectdo_test
-abbr -a r --function projectdo_run
-abbr -a m --function projectdo_build
+# abbr -a t --function projectdo_test
+# abbr -a r --function projectdo_run
+# abbr -a m --function projectdo_build
 
 if command -sq paru
     function paru
         set -lx GITFLAGS "--filter=tree:0 --depth=1"
         command paru $argv
+    end
+end
+
+if command -sq docker
+    function docker
+        command sudo -g docker -- docker $argv
     end
 end
 
