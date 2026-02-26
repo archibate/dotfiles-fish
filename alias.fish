@@ -70,6 +70,12 @@ if command -sq paru
     end
 end
 
+if set -q EDITOR
+    function nano
+        command $EDITOR $argv
+    end
+end
+
 if command -sq opencode
     function opencode
         set -l session_random_key (basename $PWD)-(command -sq openssl; and openssl rand -hex 8; or random)
