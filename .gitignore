@@ -4,3 +4,4 @@ conf.d/
 fish_variables
 __pycache__/
 .env
+/private.fish
