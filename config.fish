@@ -1,4 +1,7 @@
 source $__fish_config_dir/env.fish
+if test -f $__fish_config_dir/private.fish
+    source $__fish_config_dir/private.fish
+end
 
 if status is-interactive
 
