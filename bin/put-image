@@ -2,6 +2,7 @@
 # /// script
 # dependencies = []
 # ///
+# vim: ft=python
 
 import argparse
 import os
@@ -53,7 +54,7 @@ def serve_mode(socket_path):
                     real_path = os.path.realpath(path)
 
                     if os.path.isfile(real_path):
-                        subprocess.run(["kitten", "icat", real_path])
+                        subprocess.run(["kitty", "+kitten", "icat", real_path])
                     else:
                         print(f"File not found: {real_path}", file=sys.stderr)
             finally:
