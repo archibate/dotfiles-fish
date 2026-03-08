@@ -124,6 +124,11 @@ function y
     rm -f -- "$tmp"
 end
 
+function mcd -a path
+    mkdir -p $path
+    cd $path
+end
+
 function box -a name
     set box_base_dir ~/Codes/box
     if test -z "$name"
