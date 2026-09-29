@@ -51,6 +51,7 @@ abbr -a gwrm 'git workspace remove'
 abbr -a gb 'git branch'
 abbr -a g0 'cd (git rev-parse --show-toplevel)'
 abbr -a ggkhm 'git switch main && git reset --hard origin/main'
+abbr -a vim "$EDITOR"
 
 abbr -a g 'git'
 abbr -a p 'python'
