@@ -102,5 +102,6 @@ if status is-interactive
 
     source $__fish_config_dir/options.fish
     source $__fish_config_dir/alias.fish
+    source $__fish_config_dir/pi-fix.fish
 
 end
