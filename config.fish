@@ -79,6 +79,7 @@ if status is-interactive
         # bind -M default \cr redo
 
         for mode in default insert visual
+            bind -M $mode \cg edit_command_buffer
             if test (string split '.' $FISH_VERSION)[1] -ge 4
                 bind -M $mode home beginning-of-line
                 bind -M $mode end end-of-line
