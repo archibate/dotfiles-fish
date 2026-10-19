@@ -103,6 +103,25 @@ if command -sq opencode
     end
 end
 
+# Loaded after plugins so Fisher updates cannot overwrite our tmux wrapper.
+function tmux --wraps tmux
+    if test (count $argv) -gt 0
+        command tmux $argv
+        return $status
+    end
+
+    set -l session_name (basename "$PWD")
+    test "$PWD" = "$HOME"; and set session_name HOME
+    test "$PWD" = /; and set session_name ROOT
+
+    # The trailing ':' prevents dots in session names from selecting panes.
+    if command tmux has-session -t "=$session_name:" 2>/dev/null
+        command tmux attach-session -t "=$session_name:"
+    else
+        command tmux new-session -s "$session_name"
+    end
+end
+
 function tmux_pager_view
     tmux capture-pane -pS - | $PAGER
 end
